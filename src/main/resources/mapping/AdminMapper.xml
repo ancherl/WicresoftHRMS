@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wicresoft.dao.AdminDao">
+
+    <resultMap id="adminResultMap" type="Admin">
+        <id column="id" property="id"></id>
+        <result column="account" property="account"></result>
+        <result column="password" property="password"></result>
+        <result column="created" property="created"></result>
+    </resultMap>
+
+    <resultMap id="adminMenuOption" type="AdminMenuOption">
+        <id property="id" column="id"></id>
+        <result property="text" column="text"></result>
+        <result property="state" column="state"></result>
+        <result property="iconCls" column="iconCls"></result>
+        <result property="url" column="url"></result>
+        <result property="child_id" column="child_id"></result>
+    </resultMap>
+
+    <resultMap id="employeeResultMap" type="Employee">
+        <id property="id" column="id"></id>
+        <result property="employeeName" column="employeeName"></result>
+        <result property="department" column="department"></result>
+        <result property="email" column="email"></result>
+        <result property="address.province" column="province"></result>
+        <result property="address.cityName" column="cityName"></result>
+        <result property="address.address_Id" column="AddressId"></result>
+    </resultMap>
+
+    <resultMap id="addressResultMap" type="Address">
+        <id property="address_Id" column="address_Id"></id>
+        <result property="province" column="province"></result>
+        <result property="cityName" column="cityName"></result>
+    </resultMap>
+
+    <resultMap id="pcResourceResultMap" type="PCResource">
+        <id property="id" column="id"></id>
+        <result property="brand" column="brand"></result>
+        <result property="processor" column="processor"></result>
+        <result property="memory" column="memory"></result>
+        <result property="serialNumber" column="serialNumber"></result>
+        <result property="imageUrl" column="imageUrl"></result>
+    </resultMap>
+
+    <resultMap id="itDepartmentResultMap" type="ITDepartment">
+        <id property="id" column="id"></id>
+        <result property="departmentName" column="departmentName"></result>
+        <result property="location" column="location"></result>
+        <result property="departmentManager" column="departmentManager"></result>
+    </resultMap>
+
+    <resultMap id="hrDepartmentResultMap" type="HRDepartment">
+        <id property="id" column="id"></id>
+        <result property="departmentName" column="departmentName"></result>
+        <result property="manager" column="manager"></result>
+    </resultMap>
+
+    <!--Check if Admin account is existed -->
+    <select id="checkAdminAccount" parameterType="java.lang.String" resultType="Admin">
+        select * from adminAccount where account = #{account}
+    </select>
+
+    <!-- List All menu options-->
+    <select id="getMenuOptions" resultMap="adminMenuOption">
+        select * from adminMenuOptions where child_id= ${child_id}
+    </select>
+
+    <!-- List All Employees By Pagination -->
+    <select id="listAllEmployeesByPagination" resultMap="employeeResultMap">
+        select id, employeeName, department, email, province, cityName from Employee left join Address on Employee.address_Id=Address.address_Id
+        <where>
+            <if test="queryStr != null">
+                and employeeName like '${queryStr}%'
+            </if>
+        </where>
+        <if test="Sort != null and Order != null">
+            order by ${Sort} ${Order}
+        </if>
+        limit #{pageFirst}, #{pageSize}
+    </select>
+
+    <!-- List All Employees-->
+    <select id="listAllEmployees" resultMap="employeeResultMap">
+        select * from Employee left join Address on Employee.address_Id=Address.address_Id
+    </select>
+
+    <!-- Add a new employee-->
+    <insert id="addEmployee" parameterType="Employee">
+        insert into Employee (employeeName, department, email) values (#{employeeName}, #{department}, #{email})
+    </insert>
+
+    <!-- Add a new address record related to employee -->
+    <insert id="addAddress" parameterType="Address">
+        insert into Address (province, cityName) values (#{province}, #{cityName})
+    </insert>
+
+    <!-- Search All Addresses -->
+    <select id="listAllAddresses" resultMap="addressResultMap">
+        select * from Address
+    </select>
+
+    <!--  Update employee address_Id based on employeeName -->
+    <update id="updateEmpAddressIdByEmpName">
+        update Employee set address_Id=#{address_Id} where employeeName=#{employeeName}
+    </update>
+
+    <!-- Search Employee By Id-->
+    <select id="getEmployeeById" parameterType="java.lang.Integer" resultMap="employeeResultMap">
+        select id, employeeName, department, email, province, cityName, Employee.address_Id AddressId from Employee left join Address on Employee.address_Id=Address.address_Id where id=#{Id}
+    </select>
+
+    <!-- Update Employee By Id-->
+    <update id="updateEmployeeById" parameterType="Employee">
+        update Employee
+        <set>
+            <if test="department != null">
+                department=#{department},
+            </if>
+            <if test="email != null">
+                email=#{email}
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+    <!-- Update corresponding address record-->
+    <update id="updateAddressByAddressId" parameterType="Address">
+        update Address
+        <set>
+            <if test="province != null">
+                province=#{province},
+            </if>
+            <if test="cityName != null">
+                cityName=#{cityName}
+            </if>
+        </set>
+        where address_Id=#{address_Id}
+    </update>
+
+    <!-- Delete Employees -->
+    <delete id="deleteEmployees">
+        delete from Employee where id in
+        <foreach collection="array" open="(" separator="," close=")" item="item">
+            #{item}
+        </foreach>
+    </delete>
+    <!--List Employees Based on Ids Array -->
+    <select id="listEmployeesByIdsArray" resultMap="employeeResultMap">
+        select id, employeeName, department, email, province, cityName, Employee.address_Id AddressId from Employee left join Address on Employee.address_Id=Address.address_Id where id in
+        <foreach collection="array" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <!-- Delete corresponding Address -->
+    <delete id="deleteAddressByAddressIdArray">
+        delete from Address where address_Id in 
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- Ajax Load All Admins-->
+    <select id="listAllAdmins" resultMap="adminResultMap">
+        select * from adminAccount
+    </select>
+
+    <!-- Select all admins by pagination-->
+    <select id="listAllAdminsByPagination" resultMap="adminResultMap">
+        select id, account, password, created from adminAccount
+        <if test="Sort != null and Order != null">
+            order by ${Sort} ${Order}
+        </if>
+        limit #{pageFirst}, #{pageSize}
+    </select>
+
+    <!-- Add admins-->
+    <insert id="addAdmins" parameterType="Admin">
+        insert into adminAccount (account, password, created) values (#{account}, #{password}, #{created})
+    </insert>
+
+    <!--Get Admin By Id-->
+    <select id="getAdminById" resultMap="adminResultMap">
+        select id, account, password, created from adminAccount where id=#{Id}
+    </select>
+    <!-- Update Admin By Id-->
+    <update id="updateAdminById" parameterType="Admin">
+        update adminAccount set password=#{password} where id=#{id}
+    </update>
+    <!-- Delete Admins By Ids Array-->
+    <delete id="deleteAdmins">
+        delete from adminAccount where id in
+        <foreach collection="array" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+
+    <!-- List All PC Resources By Pagination-->
+    <select id="listAllPCResourcesByPagination" resultMap="pcResourceResultMap">
+        select id, brand, processor, memory, serialNumber, imageUrl from PCResources
+        <where>
+            <if test="queryStr != null">
+                and brand like '${queryStr}%'
+            </if>
+        </where>
+        <if test="Sort != null and Order != null">
+            order by ${Sort} ${Order}
+        </if>
+        limit #{pageFirst}, #{pageSize}
+    </select>
+    <!-- List All PC Resources -->
+    <select id="listAllPCResources" resultMap="pcResourceResultMap">
+        select * from PCResources
+    </select>
+
+    <!--Add PC Resource -->
+    <insert id="addPCResource" parameterType="PCResource">
+        insert into PCResources (brand, processor, memory, serialNumber, imageUrl) values(#{brand}, #{processor}, #{memory}, #{serialNumber}, #{imageUrl})
+    </insert>
+
+    <!-- Get PC Record BY Id -->
+    <select id="getPCRecordById" resultMap="pcResourceResultMap">
+        select id, brand, processor, memory, serialNumber, imageUrl from PCResources where id=#{Id}
+    </select>
+
+    <!-- Update PC Record -->
+    <update id="updatePCRecord" parameterType="PCResource">
+        update PCResources
+        <set>
+            <if test="brand != null">
+                brand = #{brand},
+            </if>
+            <if test="processor != null">
+                processor = #{processor},
+            </if>
+            <if test="memory != null">
+                memory = #{memory},
+            </if>
+            <if test="serialNumber != null">
+                serialNumber = #{serialNumber},
+            </if>
+            <if test="imageUrl != null">
+                imageUrl = #{imageUrl}
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!-- Delete PC Records -->
+    <delete id="deletePCRecords">
+    delete from PCResources where id in
+        <foreach collection="array" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- Ajax Load ALL Depts By Pagination-->
+    <select id="listAllDeptsByPagination" resultMap="itDepartmentResultMap">
+        select id, departmentName, location, departmentManager from ITDepartments
+        <where>
+            <if test="queryStr != null">
+                and departmentName like '${queryStr}%'
+            </if>
+        </where>
+        <if test="Sort != null and Order != null">
+            order by ${Sort} ${Order}
+        </if>
+        limit #{pageFirst}, #{pageSize}
+    </select>
+
+    <!-- List All Depts -->
+    <select id="listAllDepts" resultMap="itDepartmentResultMap">
+        select id, departmentName, location, departmentManager from ITDepartments
+    </select>
+
+    <!-- List All HR Depts -->
+    <select id="listAllHRDeptsByPagination" resultMap="hrDepartmentResultMap">
+        select id, departmentName, manager from HRDepartments
+        <where>
+            <if test="queryStr != null">
+                and departmentName like '${queryStr}%'
+            </if>
+        </where>
+        <if test="Sort != null and Order != null">
+            order by ${Sort} ${Order}
+        </if>
+        limit #{pageFirst}, #{pageSize}
+    </select>
+
+    <select id="listAllHRDepts" resultMap="hrDepartmentResultMap">
+        select id, departmentName, manager from HRDepartments
+    </select>
+
+
+</mapper>

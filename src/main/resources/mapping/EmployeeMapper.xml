@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wicresoft.dao.EmployeeDao">
+
+    <resultMap id="EmployeeResultMap" type="Employee">
+        <id property="id" column="id"></id>
+        <result property="employeeName" column="employeeName"></result>
+        <result property="department" column="department"></result>
+        <result property="email" column="email"></result>
+        <result property="address.province" column="province"></result>
+        <result property="address.cityName" column="cityName"></result>
+    </resultMap>
+
+    <!--getEmployeesByPagination
+      Note: Sort时应该注意不应该用 # 通配符，而应该用$
+      如果用 # 通配符， 会讲传递的参数值转换为String, 即wrapped with '' , ColumnName -> 'ColumnName'
+    -->
+    <select id="getEmployeesByPagination" resultMap="EmployeeResultMap">
+        select id, employeeName, department, email from Employee
+        <where>
+            <if test="queryStr != null">
+                and employeeName like '${queryStr}%'
+            </if>
+        </where>
+        <if test="Sort != null and Order != null">
+            ORDER BY ${Sort} ${Order}
+        </if>
+        limit #{pageFirst}, #{pageSize}
+    </select>
+
+    <!--List All Employees-->
+    <select id="getAllEmployees" resultMap="EmployeeResultMap">
+        select id, employeeName, department, email, province, cityName from Employee, Address where Employee.address_Id = Address.address_Id
+    </select>
+
+    <!-- Delete Employees based on Ids (array)-->
+    <delete id="deleteEmployees">
+        delete from Employee where id in
+        <foreach collection="array" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- Add Employee -->
+    <insert id="addEmployees" parameterType="Employee">
+        insert into Employee (employeeName, department, email) values(#{employeeName}, #{department}, #{email})
+    </insert>
+
+    <!-- Update Employee -->
+    <update id="updateEmployees" parameterType="Employee">
+        update Employee set employeeName=#{employeeName}, department=#{department}, email=#{email} where id= #{id}
+    </update>
+
+</mapper>
