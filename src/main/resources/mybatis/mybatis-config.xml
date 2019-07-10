@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <!--导入数据库配置文件-->
+    <properties resource="dbconfig.properties"></properties>
+    
+    <!--懒加载设置-->
+    <settings>
+        <setting name="lazyLoadingEnabled" value="true"/>
+        <setting name="aggressiveLazyLoading" value="false"></setting>
+    </settings>
+
+    <!--给JavaBean 类起别名
+    用作与 Mapper.xml文件中的ResultType
+    -->
+    <!--<typeAliases>-->
+        <!--<typeAlias type="com.wicresoft.dao.EmployeeDao" alias="EmployeeDao"></typeAlias>-->
+    <!--</typeAliases>-->
+    <typeAliases>
+        <package name="com.wicresoft.entity"></package>
+    </typeAliases>
+    
+
+    <!--<environments default="development">-->
+        <!--<environment id="development">-->
+            <!--<transactionManager type="JDBC"></transactionManager>-->
+            <!--<dataSource type="POOLED">-->
+                <!--<property name="driver" value="${driver}"></property>-->
+                <!--<property name="url" value="${url}"></property>-->
+                <!--<property name="username" value="${username}"></property>-->
+                <!--<property name="password" value="${password}"></property>-->
+            <!--</dataSource>-->
+        <!--</environment>-->
+    <!--</environments>-->
+
+    <!--&lt;!&ndash;配置映射类文件 Mapper.xml&ndash;&gt;-->
+    <!--<mappers>-->
+        <!--<mapper resource="mapping/EmployeeMapper.xml"></mapper>-->
+
+    <!--</mappers>-->
+</configuration>
